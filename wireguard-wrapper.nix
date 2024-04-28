@@ -2,7 +2,6 @@
 let
   hostname = config.networking.hostName;
   cfg = config.services.wireguard-wrapper;
-  secrets = import ../lib/wireguard;
   our_connections =
     builtins.filter (l: (builtins.elem hostname l)) cfg.connections;
 in with lib;
