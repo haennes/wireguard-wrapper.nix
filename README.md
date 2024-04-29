@@ -3,9 +3,9 @@
 - declare ips and peers and connections in one file
 - Peers are automagically configured
 - [uses wg0 as a default interface](#Todos)
--  easy organization of private  and public keys
+- easy organization of private  and public keys
 
-## Who is this  for?
+## Who is this for?
 This gets interesting if you have upwards of 3-4 peers as manually configuring each host becomes messy and hard to maintain
 
 ## Getting Started
