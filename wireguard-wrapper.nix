@@ -8,6 +8,15 @@ in with lib;
 with lib.types; {
   options.services.wireguard-wrapper = {
     enable = mkEnableOption "wireguard-wrapper";
+    #should be a per peer option, but throws an infinite recursion error on my machine
+    kind = mkOption {
+      type = enum [ "wireguard" "wg-quick" ];
+      default = "wireguard";
+      description = mdDoc ''
+        how to configure this peer.
+        can be decided on a per peer basis
+      '';
+    };
     mtu = mkOption {
       type = int;
       default = 1300;
@@ -47,7 +56,7 @@ with lib.types; {
   config = mkIf cfg.enable ({
     networking.firewall.allowedUDPPorts = mkIf cfg.openPort [ cfg.port ];
 
-    networking.wireguard.interfaces = {
+    networking."${cfg.kind}".interfaces = {
       "wg0" = {
         ips = [ (builtins.head cfg.nodes."${hostname}".ips) ];
         mtu = cfg.mtu;
