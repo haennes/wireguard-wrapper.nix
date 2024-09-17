@@ -56,25 +56,27 @@ with lib.types; {
   config = mkIf cfg.enable ({
     networking.firewall.allowedUDPPorts = mkIf cfg.openPort [ cfg.port ];
 
-    networking."${cfg.kind}".interfaces = {
-      "wg0" = {
-        ips = [ (builtins.head cfg.nodes."${hostname}".ips) ];
-        mtu = cfg.mtu;
-        privateKeyFile = cfg.privateKeyFile;
-        listenPort = cfg.port;
-        peers = (builtins.map (l:
-          let
-            other = (lib.head (lib.remove hostname l));
-            other_node = cfg.nodes."${other}";
-          in ({
-            name = other;
-            publicKey = ((cfg.publicKey) other);
-            allowedIPs = (other_node.ips);
-            persistentKeepalive = 25;
-            endpoint = other_node.endpoint;
-          })) our_connections);
+    networking."${cfg.kind}".interfaces =
+      let ips_name = if cfg.kind == "wireguard" then "ips" else "address";
+      in {
+        "wg0" = {
+          ${ips_name} = [ (builtins.head cfg.nodes."${hostname}".ips) ];
+          mtu = cfg.mtu;
+          privateKeyFile = cfg.privateKeyFile;
+          listenPort = cfg.port;
+          peers = (builtins.map (l:
+            let
+              other = (lib.head (lib.remove hostname l));
+              other_node = cfg.nodes."${other}";
+            in ({
+              publicKey = ((cfg.publicKey) other);
+              allowedIPs = (other_node.ips);
+              persistentKeepalive = 25;
+              endpoint = other_node.endpoint;
+            } // (if cfg.kind == "wireguard" then { name = other; } else { })))
+            our_connections);
+        };
       };
-    };
 
   });
 }
