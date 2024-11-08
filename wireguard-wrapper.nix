@@ -8,6 +8,17 @@ in with lib;
 with lib.types; {
   options.services.wireguard-wrapper = {
     enable = mkEnableOption "wireguard-wrapper";
+    RestartOnFailure = {
+      enable =
+        mkEnableOption "restarts the systemd service if connection fails";
+      RestartSec = mkOption {
+        type = ints.u16;
+        default = 10;
+        description = ''
+          Time to sleep inbetween restarts
+        '';
+      };
+    };
     #should be a per peer option, but throws an infinite recursion error on my machine
     kind = mkOption {
       type = enum [ "wireguard" "wg-quick" ];
@@ -78,5 +89,22 @@ with lib.types; {
         };
       };
 
+    systemd.services = mkIf cfg.RestartOnFailure.enable (listToAttrs (map (n:
+
+      let
+        other = (lib.head (lib.remove hostname n));
+        other_node = cfg.nodes."${other}";
+      in {
+        name = "wireguard-wg0-peer-${other}";
+        value = {
+          serviceConfig = {
+            Restart = "on-failure";
+            inherit (cfg.RestartOnFailure) RestartSec;
+          };
+          unitConfig.StartLimitIntervalSec = 0;
+        };
+      }
+
+    ) our_connections));
   });
 }
